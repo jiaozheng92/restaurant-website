@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="我的订单 - 品味餐厅订单管理">
+    <meta name="keywords" content="订单, 订单历史, 订单跟踪, 配送状态">
+    <title>我的订单 - 品味餐厅</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .orders-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .orders-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-light);
+            padding: 3rem 0;
+            text-align: center;
+        }
+        
+        .order-item {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .order-item:hover {
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .order-id {
+            font-weight: bold;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+        
+        .order-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-confirmed {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-preparing {
+            background: #ffe6cc;
+            color: #8b4513;
+        }
+        
+        .status-delivering {
+            background: #e7f3ff;
+            color: #0066cc;
+        }
+        
+        .status-delivered {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+        
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .order-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .order-items {
+            margin: 1rem 0;
+        }
+        
+        .order-item-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .item-image {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+        
+        .order-total {
+            text-align: right;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--border-color);
+        }
+        
+        .order-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-reorder {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-reorder:hover {
+            background: var(--secondary-color);
+        }
+        
+        .btn-cancel {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #c0392b;
+        }
+        
+        .btn-track {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-track:hover {
+            background: #219a52;
+        }
+        
+        .empty-orders {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+        }
+        
+        .empty-orders-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .filter-tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .filter-tab.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .filter-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .orders-container {
+                padding: 1rem;
+            }
+            
+            .order-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .order-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .order-actions {
+                flex-direction: column;
+            }
+            
+            .filter-tabs {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">品味餐厅</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">首页</a></li>
+                <li><a href="menu.html" class="nav-link">菜单</a></li>
+                <li><a href="about.html" class="nav-link">关于我们</a></li>
+                <li><a href="contact.html" class="nav-link">联系我们</a></li>
+                <li><a href="cart.html" class="nav-link">购物车 <span class="cart-count">0</span></a></li>
+                <li><a href="login.html" class="nav-link">登录</a></li>
+            </ul>
+            <button class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Orders Header -->
+        <section class="orders-header">
+            <div class="container">
+                <h1>我的订单</h1>
+                <p>查看您的订单历史和配送状态</p>
+            </div>
+        </section>
+
+        <!-- Orders Content -->
+        <section class="section">
+            <div class="orders-container">
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" onclick="filterOrders('all')">全部订单</button>
+                    <button class="filter-tab" onclick="filterOrders('pending')">待处理</button>
+                    <button class="filter-tab" onclick="filterOrders('confirmed')">已确认</button>
+                    <button class="filter-tab" onclick="filterOrders('delivering')">配送中</button>
+                    <button class="filter-tab" onclick="filterOrders('delivered')">已完成</button>
+                </div>
+
+                <!-- Orders List -->
+                <div class="orders-container">
+                    <!-- Orders will be loaded by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Order Tracking Info -->
+        <section class="section" style="background: var(--background-light);">
+            <div class="container">
+                <h2 class="section-title">配送状态说明</h2>
+                <div class="grid grid-2">
+                    <div class="card">
+                        <h3>📝 订单状态</h3>
+                        <div style="margin-top: 1rem;">
+                            <div style="margin-bottom: 0.5rem;">
+                                <span class="order-status status-pending">待处理</span> - 订单已提交，等待确认
+                            </div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <span class="order-status status-confirmed">已确认</span> - 订单已确认，开始准备
+                            </div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <span class="order-status status-preparing">制作中</span> - 厨师正在精心制作
+                            </div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <span class="order-status status-delivering">配送中</span> - 配送员正在送餐路上
+                            </div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <span class="order-status status-delivered">已完成</span> - 订单已成功送达
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>⏰ 配送时间</h3>
+                        <ul style="margin-top: 1rem; padding-left: 1.5rem;">
+                            <li><strong>正常时段：</strong>30-45分钟送达</li>
+                            <li><strong>高峰时段：</strong>45-60分钟送达</li>
+                            <li><strong>配送范围：</strong>市区内5公里</li>
+                            <li><strong>配送费用：</strong>5元（满50元免费）</li>
+                        </ul>
+                        <p style="margin-top: 1rem;">
+                            <strong>客服电话：</strong>400-123-4567<br>
+                            如有任何问题，请随时联系我们的客服团队。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>品味餐厅</h3>
+                    <p>致力于为您提供最正宗的中式美食体验，让美味触手可及。</p>
+                    <p>客服电话: 400-123-4567</p>
+                    <p>营业时间: 10:30 - 22:00</p>
+                </div>
+                <div class="footer-section">
+                    <h3>快速链接</h3>
+                    <a href="menu.html">菜单</a>
+                    <a href="about.html">关于我们</a>
+                    <a href="contact.html">联系我们</a>
+                    <a href="orders.html">我的订单</a>
+                </div>
+                <div class="footer-section">
+                    <h3>联系方式</h3>
+                    <p>地址: 北京市朝阳区美食街123号</p>
+                    <p>电话: (010) 1234-5678</p>
+                    <p>邮箱: info@pinwei-restaurant.com</p>
+                    <p>微信: pinwei_restaurant</p>
+                </div>
+                <div class="footer-section">
+                    <h3>关注我们</h3>
+                    <p>扫码关注微信公众号，获取最新优惠信息</p>
+                    <div class="social-links">
+                        <a href="#">微信</a>
+                        <a href="#">微博</a>
+                        <a href="#">抖音</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 品味餐厅. 保留所有权利. | 网站由现代化Web技术构建</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+    <script>
+        function filterOrders(status) {
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Filter orders (this would be implemented in a real app)
+            app.showNotification(`显示${status === 'all' ? '全部' : status}订单`, 'info');
+        }
+        
+        function reorderItems(orderId) {
+            const orders = app.getUserOrders();
+            const order = orders.find(o => o.id === orderId);
+            
+            if (order) {
+                // Add items to cart
+                order.items.forEach(item => {
+                    app.addToCart(item.id);
+                });
+                app.showNotification('商品已添加到购物车', 'success');
+                setTimeout(() => {
+                    window.location.href = 'cart.html';
+                }, 1000);
+            }
+        }
+        
+        function cancelOrder(orderId) {
+            if (confirm('确定要取消这个订单吗？')) {
+                // In a real app, this would call an API
+                app.showNotification('订单取消功能开发中', 'info');
+            }
+        }
+        
+        function trackOrder(orderId) {
+            app.showNotification('订单跟踪功能开发中', 'info');
+        }
+        
+        // Check if user is logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!user.loggedIn) {
+                app.showNotification('请先登录查看订单', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'login.html?redirect=orders.html';
+                }, 1500);
+                return;
+            }
+            
+            // Override display orders to include action buttons
+            const originalDisplayUserOrders = app.displayUserOrders;
+            app.displayUserOrders = function() {
+                const ordersContainer = document.querySelector('.orders-container');
+                if (!ordersContainer) return;
+
+                const orders = this.getUserOrders();
+                
+                if (orders.length === 0) {
+                    ordersContainer.innerHTML = `
+                        <div class="empty-orders">
+                            <div class="empty-orders-icon">📦</div>
+                            <h3>暂无订单</h3>
+                            <p>您还没有任何订单，快去菜单页面看看吧！</p>
+                            <a href="menu.html" class="btn">立即点餐</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                ordersContainer.innerHTML = orders.map(order => `
+                    <div class="order-item">
+                        <div class="order-header">
+                            <div class="order-id">订单 #${order.id}</div>
+                            <div class="order-status status-${order.status.toLowerCase().replace(/\s+/g, '-')}">
+                                ${order.status}
+                            </div>
+                        </div>
+                        <div class="order-info">
+                            <div>
+                                <strong>下单时间：</strong> ${new Date(order.date).toLocaleString()}
+                            </div>
+                            <div>
+                                <strong>配送地址：</strong> ${order.address || '使用默认地址'}
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            ${order.items.map(item => `
+                                <div class="order-item-detail">
+                                    <div class="item-info">
+                                        <img src="${item.image}" alt="${item.name}" class="item-image" 
+                                             onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 40 40\\"><rect fill=\\"%23f0f0f0\\" width=\\"40\\" height=\\"40\\"/><text x=\\"50%\\" y=\\"50%\\" font-size=\\"8\\" text-anchor=\\"middle\\" dy=\\".3em\\" fill=\\"%23999\\">菜品</text></svg>'">
+                                        <div>
+                                            <div>${item.name}</div>
+                                            <div style="color: #666; font-size: 0.9rem;">数量: ${item.quantity}</div>
+                                        </div>
+                                    </div>
+                                    <div>¥${(item.price * item.quantity).toFixed(2)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="order-total">
+                            总计: ¥${order.total.toFixed(2)}
+                        </div>
+                        <div class="order-actions">
+                            <button class="action-btn btn-reorder" onclick="reorderItems('${order.id}')">
+                                再次下单
+                            </button>
+                            ${order.status === '已下单' || order.status === '待处理' ? 
+                                `<button class="action-btn btn-cancel" onclick="cancelOrder('${order.id}')">取消订单</button>` : 
+                                ''}
+                            ${order.status === '配送中' ? 
+                                `<button class="action-btn btn-track" onclick="trackOrder('${order.id}')">跟踪订单</button>` : 
+                                ''}
+                        </div>
+                    </div>
+                `).join('');
+            };
+        });
+    </script>
+</body>
+</html>
